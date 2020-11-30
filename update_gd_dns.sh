@@ -39,21 +39,23 @@
 #key="godaddy_developer_api_key"             # key for godaddy developer API - prod
 #secret="godaddy_developer_api_secret"       # secret for godaddy developer API - prod
 
+echo "Executing at: $(date)"
+
 # include config file. Alternatively comment this out and edit above lines.
-. update_gd_dns_cfg.sh
+. ~/.config/godaddy-dns-update.conf
 
 headers="Authorization: sso-key $key:$secret"
 # echo $headers
-
-result=$(curl -s -X GET -H "$headers" \
- "https://api.godaddy.com/v1/domains/$domain/records/$type/$name")
+dgurl="https://api.godaddy.com/v1/domains/$domain/records/$type/$name"
+# echo $dgurl
+result=$(curl -s -X GET -H "$headers" $dgurl)
 
 dnsIp=$(echo $result | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
  echo "dnsIp:" $dnsIp
 
 # Get public ip address there are several websites that can do this.
 ret=$(curl -s GET "http://ipinfo.io/json")
-#echo $ret
+# echo $ret
 currentIp=$(echo $ret | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
  echo "currentIp:" $currentIp
 
@@ -65,6 +67,7 @@ if [ "$dnsIp" != "$currentIp" ];
 		-H "Content-Type: application/json" \
 		-H "$headers" \
 		-d "[ { \"data\": \"$currentIp\", \"port\": $port, \"priority\": 0, \"protocol\": \"string\", \"service\": \"string\", \"ttl\": $ttl, \"weight\": $weight } ]"  
+	echo "Updated."
 fi
 if [ "$dnsIp" = "$currentIp" ];
  then
